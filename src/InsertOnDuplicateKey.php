@@ -4,7 +4,6 @@ namespace Ndexondeck;
 
 trait InsertOnDuplicateKey
 {
-    private static $mySqlDelimiter = "`";
     /**
      * Insert using mysql ON DUPLICATE KEY UPDATE.
      * @link http://dev.mysql.com/doc/refman/5.7/en/insert-on-duplicate.html
@@ -25,23 +24,64 @@ trait InsertOnDuplicateKey
             return false;
         }
 
-        //we want to get the driver so as to know what to set mySqlDelimiter to
-        $class = get_called_class();
+        $connection =  static::getModelConnectionName();
+        $driver = config('database.connections.'.$connection->getName().'.driver');
+        if($driver == "sqlsrv"){
 
-        $connection =  (new $class())->getConnection();
-        $driver = config('database.connections.'.$connection.'.driver');
-        if($driver != "mysql") static::$mySqlDelimiter = "";
+            $table = static::getTableName();
 
-        // Case where $data is not an array of arrays.
-        if (!isset($data[0])) {
-            $data = [$data];
+            if(is_null($updateColumns)){
+                return $connection->table($table)->insert($data);
+            }
+
+            $sets = $conditions = $rows = [];
+            foreach($data as $row){
+                $fields = [];
+                foreach($row as $key=>$value){
+                    $fields[] = "'$value' AS [$key]";
+                }
+                $rows[] = "SELECT ".implode(",",$fields);
+            }
+            $cols = array_keys($row);
+
+            $updateAbles = array_diff($cols,$updateColumns);
+
+            foreach($cols as $k=>$v){
+                $cols[$k] = "[$v]";
+            }
+
+            foreach($updateColumns as $updateColumn){
+                $conditions[] = "target.[$updateColumn] = source.[$updateColumn]";
+            }
+            foreach($updateAbles as $updateAble){
+                $sets[] = "target.[$updateAble] = source.[$updateAble]";
+            }
+
+            $sql = "MERGE $table AS target
+            USING (".implode(" UNION ",$rows).") AS source (".implode(", ",$cols).")
+            ON (".implode(" AND ",$conditions).")
+            WHEN MATCHED THEN
+                UPDATE SET
+                    ".implode(", ",$sets)."
+            WHEN NOT MATCHED THEN
+            INSERT (".implode(", ",$cols).")
+            VALUES (source.".implode(", source.",$cols).")
+            ;";
+
+            return $connection->statement($sql);
         }
+        else{
+            // Case where $data is not an array of arrays.
+            if (!isset($data[0])) {
+                $data = [$data];
+            }
 
-        $sql = static::buildInsertOnDuplicateSql($data, $updateColumns);
+            $sql = static::buildInsertOnDuplicateSql($data, $updateColumns);
 
-        $data = static::inLineArray($data);
+            $data = static::inLineArray($data);
 
-        return self::getModelConnectionName()->affectingStatement($sql, $data);
+            return $connection->affectingStatement($sql, $data);
+        }
     }
 
     /**
@@ -107,10 +147,10 @@ trait InsertOnDuplicateKey
     }
 
     /**
-    * Static function for getting connection name
-    *
-    * @return string
-    */
+     * Static function for getting connection name
+     *
+     * @return string
+     */
     public static function getModelConnectionName()
     {
         $class = get_called_class();
@@ -198,7 +238,7 @@ trait InsertOnDuplicateKey
             throw new \InvalidArgumentException('Empty array.');
         }
 
-        return static::$mySqlDelimiter. implode(static::$mySqlDelimiter.','.static::$mySqlDelimiter, array_keys($first)) . static::$mySqlDelimiter;
+        return '`' . implode('`,`', array_keys($first)) . '`';
     }
 
     /**
@@ -214,7 +254,7 @@ trait InsertOnDuplicateKey
 
         foreach ($updatedColumns as $key => $value) {
             if (is_numeric($key)) {
-                $out[] = sprintf(static::$mySqlDelimiter.'%s'.static::$mySqlDelimiter.' = VALUES('.static::$mySqlDelimiter.'%s'.static::$mySqlDelimiter.')', $value, $value);
+                $out[] = sprintf('`%s` = VALUES(`%s`)', $value, $value);
             } else {
                 $out[] = sprintf('%s = %s', $key, $value);
             }
@@ -247,7 +287,7 @@ trait InsertOnDuplicateKey
     {
         $first = static::getFirstRow($data);
 
-        $sql  = 'INSERT INTO ' . static::getTablePrefix() . static::getTableName() . '(' . static::getColumnList($first) . ') VALUES' . PHP_EOL;
+        $sql  = 'INSERT INTO `' . static::getTablePrefix() . static::getTableName() . '`(' . static::getColumnList($first) . ') VALUES' . PHP_EOL;
         $sql .=  static::buildQuestionMarks($data) . PHP_EOL;
         $sql .= 'ON DUPLICATE KEY UPDATE ';
 
@@ -271,7 +311,7 @@ trait InsertOnDuplicateKey
     {
         $first = static::getFirstRow($data);
 
-        $sql  = 'INSERT IGNORE INTO ' . static::getTablePrefix() . static::getTableName() . '(' . static::getColumnList($first) . ') VALUES' . PHP_EOL;
+        $sql  = 'INSERT IGNORE INTO `' . static::getTablePrefix() . static::getTableName() . '`(' . static::getColumnList($first) . ') VALUES' . PHP_EOL;
         $sql .=  static::buildQuestionMarks($data);
 
         return $sql;
@@ -288,7 +328,7 @@ trait InsertOnDuplicateKey
     {
         $first = static::getFirstRow($data);
 
-        $sql  = 'REPLACE INTO ' . static::getTablePrefix() . static::getTableName() . '(' . static::getColumnList($first) . ') VALUES' . PHP_EOL;
+        $sql  = 'REPLACE INTO `' . static::getTablePrefix() . static::getTableName() . '`(' . static::getColumnList($first) . ') VALUES' . PHP_EOL;
         $sql .=  static::buildQuestionMarks($data);
 
         return $sql;
