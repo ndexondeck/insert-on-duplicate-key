@@ -4,6 +4,7 @@ namespace Yadakhov;
 
 trait InsertOnDuplicateKey
 {
+    private static $mySqlDelimiter = "`";
     /**
      * Insert using mysql ON DUPLICATE KEY UPDATE.
      * @link http://dev.mysql.com/doc/refman/5.7/en/insert-on-duplicate.html
@@ -23,6 +24,13 @@ trait InsertOnDuplicateKey
         if (empty($data)) {
             return false;
         }
+
+        //we want to get the driver so as to know what to set mySqlDelimiter to
+        $class = get_called_class();
+
+        $connection =  (new $class())->getConnection();
+        $driver = config('database.connections.'.$connection.'.driver');
+        if($driver != "mysql") static::$mySqlDelimiter = "";
 
         // Case where $data is not an array of arrays.
         if (!isset($data[0])) {
@@ -190,7 +198,7 @@ trait InsertOnDuplicateKey
             throw new \InvalidArgumentException('Empty array.');
         }
 
-        return '`' . implode('`,`', array_keys($first)) . '`';
+        return static::$mySqlDelimiter. implode(static::$mySqlDelimiter.','.static::$mySqlDelimiter, array_keys($first)) . static::$mySqlDelimiter;
     }
 
     /**
@@ -206,7 +214,7 @@ trait InsertOnDuplicateKey
 
         foreach ($updatedColumns as $key => $value) {
             if (is_numeric($key)) {
-                $out[] = sprintf('`%s` = VALUES(`%s`)', $value, $value);
+                $out[] = sprintf(static::$mySqlDelimiter.'%s'.static::$mySqlDelimiter.' = VALUES('.static::$mySqlDelimiter.'%s'.static::$mySqlDelimiter.')', $value, $value);
             } else {
                 $out[] = sprintf('%s = %s', $key, $value);
             }
@@ -239,7 +247,7 @@ trait InsertOnDuplicateKey
     {
         $first = static::getFirstRow($data);
 
-        $sql  = 'INSERT INTO `' . static::getTablePrefix() . static::getTableName() . '`(' . static::getColumnList($first) . ') VALUES' . PHP_EOL;
+        $sql  = 'INSERT INTO ' . static::getTablePrefix() . static::getTableName() . '(' . static::getColumnList($first) . ') VALUES' . PHP_EOL;
         $sql .=  static::buildQuestionMarks($data) . PHP_EOL;
         $sql .= 'ON DUPLICATE KEY UPDATE ';
 
@@ -263,7 +271,7 @@ trait InsertOnDuplicateKey
     {
         $first = static::getFirstRow($data);
 
-        $sql  = 'INSERT IGNORE INTO `' . static::getTablePrefix() . static::getTableName() . '`(' . static::getColumnList($first) . ') VALUES' . PHP_EOL;
+        $sql  = 'INSERT IGNORE INTO ' . static::getTablePrefix() . static::getTableName() . '(' . static::getColumnList($first) . ') VALUES' . PHP_EOL;
         $sql .=  static::buildQuestionMarks($data);
 
         return $sql;
@@ -280,7 +288,7 @@ trait InsertOnDuplicateKey
     {
         $first = static::getFirstRow($data);
 
-        $sql  = 'REPLACE INTO `' . static::getTablePrefix() . static::getTableName() . '`(' . static::getColumnList($first) . ') VALUES' . PHP_EOL;
+        $sql  = 'REPLACE INTO ' . static::getTablePrefix() . static::getTableName() . '(' . static::getColumnList($first) . ') VALUES' . PHP_EOL;
         $sql .=  static::buildQuestionMarks($data);
 
         return $sql;
