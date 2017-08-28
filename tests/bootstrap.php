@@ -3,7 +3,7 @@
 require __DIR__.'/../vendor/autoload.php';
 
 use Illuminate\Database\Eloquent\Model;
-use Yadakhov\InsertOnDuplicateKey;
+use Ndexondeck\InsertOnDuplicateKey;
 
 class BootstrapTest extends \PHPUnit_Framework_TestCase
 {

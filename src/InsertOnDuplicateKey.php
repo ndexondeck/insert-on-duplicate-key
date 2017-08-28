@@ -1,6 +1,6 @@
 <?php
 
-namespace Yadakhov;
+namespace Ndexondeck;
 
 trait InsertOnDuplicateKey
 {
