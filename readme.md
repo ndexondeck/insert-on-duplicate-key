@@ -1,6 +1,6 @@
 # MySQL Insert On Duplicate Key Update Eloquent Trait
 
-[![Latest Stable Version](https://poser.pugx.org/yadakhov/insert-on-duplicate-key/version)](https://packagist.org/packages/yadakhov/insert-on-duplicate-key)
+[![Latest Stable Version](https://poser.pugx.org/yadakhov/insert-on-duplicate-key/version)](https://packagist.org/packages/ndexondeck/insert-on-duplicate-key)
 [![License](https://poser.pugx.org/yadakhov/insert-on-duplicate-key/license)](https://packagist.org/packages/yadakhov/insert-on-duplicate-key)
 [![Build Status](https://travis-ci.org/yadakhov/insert-on-duplicate-key.svg)](https://travis-ci.org/yadakhov/insert-on-duplicate-key)
 
@@ -12,7 +12,7 @@ It's a trait meant to be used with Laravel's Eloquent ORM.
 
 ```php
 use Illuminate\Database\Eloquent\Model;
-use Yadakhov\InsertOnDuplicateKey;
+use Ndexondeck\InsertOnDuplicateKey;
 
 /**
  * Class User.
