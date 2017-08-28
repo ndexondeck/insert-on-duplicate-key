@@ -1,19 +1,19 @@
 {
-    "name": "yadakhov/insert-on-duplicate-key",
+    "name": "ndexondeck/insert-on-duplicate-key",
     "type": "library",
-    "description": "A trait for MySQL INSERT ON DUPLICATE KEY UPDATE.",
+    "description": "A trait for MySQL INSERT ON DUPLICATE KEY UPDATE forked from Yada Khov.",
     "keywords": [
         "database",
         "mysql",
         "eloquent"
     ],
-    "homepage": "https://github.com/yadakhov/insert-on-duplicate-key",
+    "homepage": "https://github.com/ndexondeck/insert-on-duplicate-key.git",
     "license": "MIT",
     "authors": [
         {
-            "name": "Yada Khov",
-            "email": "yada.khov@gmail.com",
-            "homepage": "https://github.com/yadakhov"
+            "name": "Ohadoma Nduka",
+            "email": "ndexondeck@gmail.com",
+            "homepage": "https://github.com/ndexondeck"
         }
     ],
     "require": {},
@@ -24,7 +24,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Yadakhov\\": "src/"
+            "Ndexondeck\\": "src/"
         }
     }
 }
