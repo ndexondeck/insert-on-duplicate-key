@@ -38,6 +38,7 @@ trait InsertOnDuplicateKey
             foreach($data as $row){
                 $fields = [];
                 foreach($row as $key=>$value){
+					$value = str_replace("'","''",$value);
                     $fields[] = "'$value' AS [$key]";
                 }
                 $rows[] = "SELECT ".implode(",",$fields);
